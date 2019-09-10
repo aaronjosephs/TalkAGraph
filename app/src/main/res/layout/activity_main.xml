@@ -7,13 +7,54 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-  <TextView
+  <Button
+      android:id="@+id/startRecording"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:text="Hello World!"
-      app:layout_constraintBottom_toBottomOf="parent"
-      app:layout_constraintLeft_toLeftOf="parent"
-      app:layout_constraintRight_toRightOf="parent"
+      android:layout_marginTop="32dp"
+      android:layout_marginStart="29dp"
+      android:layout_marginEnd="27dp"
+      android:onClick="startRecording"
+      android:text="Start Recording"
+      app:layout_constraintEnd_toStartOf="@+id/stopRecording"
+      app:layout_constraintHorizontal_bias="0.0"
+      app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toTopOf="parent"/>
+  <Button
+      android:id="@+id/stopRecording"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:onClick="stopRecording"
+      android:text="Stop Recording"
+      tools:layout_editor_absoluteX="195dp"
+      tools:layout_editor_absoluteY="32dp"/>
+  <TextView
+      android:id="@+id/speaker1"
+      android:layout_width="291dp"
+      android:layout_height="40dp"
+      android:text="TextView"
+      app:layout_constraintStart_toStartOf="@+id/speaker2"
+      tools:layout_editor_absoluteY="106dp"/>
+  <TextView
+      android:id="@+id/speaker2"
+      android:layout_width="291dp"
+      android:layout_height="38dp"
+      android:text="TextView"
+      app:layout_constraintStart_toStartOf="@+id/speaker3"
+      tools:layout_editor_absoluteY="154dp"/>
+  <TextView
+      android:id="@+id/speaker3"
+      android:layout_width="291dp"
+      android:layout_height="38dp"
+      android:text="TextView"
+      app:layout_constraintStart_toStartOf="@+id/speaker4"
+      tools:layout_editor_absoluteY="200dp"/>
+  <TextView
+      android:id="@+id/speaker4"
+      android:layout_width="293dp"
+      android:layout_height="39dp"
+      android:text="TextView"
+      tools:layout_editor_absoluteX="0dp"
+      tools:layout_editor_absoluteY="246dp"/>
 
 </android.support.constraint.ConstraintLayout>
