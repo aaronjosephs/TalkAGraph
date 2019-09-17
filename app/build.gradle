@@ -43,5 +43,15 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     //    compile group: 'com.google.cloud', name: 'google-cloud-speech', version: '1.20.0'
-    compile 'com.google.cloud:google-cloud-speech:0.87.0-beta'
+    implementation 'com.google.cloud:google-cloud-speech:0.85.0-beta'
+    implementation 'io.grpc:grpc-okhttp:1.20.0'
 }
+
+//task copySecretKey(type: Copy) {
+//    File secretKey = file "$System.env.GOOGLE_APPLICATION_CREDENTIALS"
+//    from secretKey.getParent()
+//    include secretKey.getName()
+//    into 'src/main/res/raw'
+//    rename secretKey.getName(), "credential.json"
+//}
+//preBuild.dependsOn(copySecretKey)
