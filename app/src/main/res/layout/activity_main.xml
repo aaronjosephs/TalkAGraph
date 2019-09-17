@@ -5,56 +5,85 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    tools:layout_editor_absoluteY="81dp">
 
   <Button
       android:id="@+id/startRecording"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_marginTop="32dp"
-      android:layout_marginStart="29dp"
-      android:layout_marginEnd="27dp"
+      android:layout_width="126dp"
+      android:layout_height="62dp"
+      android:layout_marginTop="8dp"
+      android:layout_marginBottom="8dp"
+      android:layout_marginStart="8dp"
+      android:layout_marginEnd="8dp"
       android:onClick="startRecording"
-      android:text="Start Recording"
+      android:text="@string/start_recording"
+      app:layout_constraintBottom_toTopOf="@+id/speaker1"
       app:layout_constraintEnd_toStartOf="@+id/stopRecording"
-      app:layout_constraintHorizontal_bias="0.0"
       app:layout_constraintStart_toStartOf="parent"
-      app:layout_constraintTop_toTopOf="parent"/>
+      app:layout_constraintTop_toTopOf="@+id/guideline"/>
   <Button
       android:id="@+id/stopRecording"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
+      android:layout_width="120dp"
+      android:layout_height="63dp"
+      android:layout_marginTop="8dp"
+      android:layout_marginBottom="8dp"
+      android:layout_marginEnd="44dp"
       android:onClick="stopRecording"
-      android:text="Stop Recording"
-      tools:layout_editor_absoluteX="195dp"
-      tools:layout_editor_absoluteY="32dp"/>
+      android:text="@string/stop_recording"
+      app:layout_constraintBottom_toTopOf="@+id/speaker1"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintTop_toTopOf="parent"
+      app:layout_constraintVertical_bias="0.548"/>
   <TextView
       android:id="@+id/speaker1"
       android:layout_width="291dp"
-      android:layout_height="40dp"
-      android:text="TextView"
-      app:layout_constraintStart_toStartOf="@+id/speaker2"
-      tools:layout_editor_absoluteY="106dp"/>
+      android:layout_height="43dp"
+      android:layout_marginBottom="8dp"
+      android:layout_marginStart="8dp"
+      android:layout_marginEnd="8dp"
+      android:text="@string/speaker_1"
+      app:layout_constraintBottom_toTopOf="@+id/speaker2"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"/>
   <TextView
       android:id="@+id/speaker2"
       android:layout_width="291dp"
-      android:layout_height="38dp"
-      android:text="TextView"
-      app:layout_constraintStart_toStartOf="@+id/speaker3"
-      tools:layout_editor_absoluteY="154dp"/>
+      android:layout_height="47dp"
+      android:layout_marginBottom="8dp"
+      android:layout_marginStart="8dp"
+      android:layout_marginEnd="8dp"
+      android:text="@string/speaker_2"
+      app:layout_constraintBottom_toTopOf="@+id/speaker3"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"/>
   <TextView
       android:id="@+id/speaker3"
       android:layout_width="291dp"
-      android:layout_height="38dp"
-      android:text="TextView"
-      app:layout_constraintStart_toStartOf="@+id/speaker4"
-      tools:layout_editor_absoluteY="200dp"/>
+      android:layout_height="46dp"
+      android:layout_marginBottom="8dp"
+      android:layout_marginStart="8dp"
+      android:layout_marginEnd="8dp"
+      android:text="@string/speaker_3"
+      app:layout_constraintBottom_toTopOf="@+id/speaker4"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"/>
   <TextView
       android:id="@+id/speaker4"
       android:layout_width="293dp"
-      android:layout_height="39dp"
-      android:text="TextView"
-      tools:layout_editor_absoluteX="0dp"
-      tools:layout_editor_absoluteY="246dp"/>
+      android:layout_height="47dp"
+      android:layout_marginBottom="8dp"
+      android:layout_marginStart="8dp"
+      android:layout_marginEnd="8dp"
+      android:text="@string/speaker_4"
+      app:layout_constraintBottom_toBottomOf="parent"
+      app:layout_constraintEnd_toEndOf="parent"
+      app:layout_constraintStart_toStartOf="parent"/>
+  <android.support.constraint.Guideline
+      android:id="@+id/guideline"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:orientation="horizontal"
+      app:layout_constraintGuide_begin="20dp"/>
 
 </android.support.constraint.ConstraintLayout>

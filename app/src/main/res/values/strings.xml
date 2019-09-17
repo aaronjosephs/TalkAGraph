@@ -1,3 +1,9 @@
 <resources>
   <string name="app_name">TalkAGraph</string>
+  <string name="start_recording">Start Recording</string>
+  <string name="stop_recording">Stop Recording</string>
+  <string name="speaker_1">Speaker 1</string>
+  <string name="speaker_2">Speaker 2</string>
+  <string name="speaker_3">Speaker 3</string>
+  <string name="speaker_4">Speaker 4</string>
 </resources>
