@@ -10,46 +10,15 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.Switch;
-import android.widget.TextView;
-import android.widget.Toast;
 import com.google.cloud.speech.v1p1beta1.SpeechRecognitionAlternative;
-import java.util.HashMap;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
-  private final SpeechService.Listener speechServiceListener =
-      new SpeechService.Listener() {
-        @Override
-        public void onSpeechRecognized(final SpeechRecognitionAlternative alternative,
-            final boolean isFinal) {
-          if (isFinal) {
-            // voiceRecorder.dismiss();
-          }
-
-          totalWordCount += alternative.getWordsCount();
-          alternative.getWordsList().forEach(entry -> {
-            int tag = entry.getSpeakerTag();
-            if (speakerMap.containsKey(tag)) {
-              speakerMap.put(tag, speakerMap.get(tag) + 1);
-            } else {
-              speakerMap.put(tag, 1);
-            }
-          });
-          runOnUiThread(MainActivity.this::updatePercents);
-        }
-
-      };
-  private static final int REQUEST_RECORD_AUDIO_PERMISSION = 1;
-  private static final String TAG = "MainActivity";
-  final Map<Integer, Integer> speakerMap = new HashMap<>();
-  int totalWordCount = 0;
-  private SpeechService speechService;
-  private VoiceRecorder voiceRecorder;
-  private Switch recordingSwitch;
   private final ServiceConnection serviceConnection = new ServiceConnection() {
 
     @Override
@@ -64,12 +33,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
   };
-
   private final VoiceRecorder.Callback voiceRecorderCallback = new VoiceRecorder.Callback() {
 
     @Override
     public void onVoiceStart() {
-      // showStatus(true);
       if (speechService != null) {
         Log.e(TAG, "Start recognizing");
         speechService.startRecognizing(voiceRecorder.getSampleRate());
@@ -85,25 +52,41 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onVoiceEnd() {
-      // showStatus(false);
       if (speechService != null) {
         speechService.finishRecognizing();
       }
     }
 
   };
-
-  private TextView speaker1;
-  private TextView speaker2;
-  private TextView speaker3;
-  private TextView speaker4;
+  private static final int REQUEST_RECORD_AUDIO_PERMISSION = 1;
+  private static final String TAG = "MainActivity";
+  private RecyclerView speakerRecyclerView;
+  private SpeechService speechService;
+  private VoiceRecorder voiceRecorder;
+  private Switch recordingSwitch;
+  private SpeakerListAdapter speakerListAdapter;
+  private final SpeechService.Listener speechServiceListener =
+      new SpeechService.Listener() {
+        @Override
+        public void onSpeechRecognized(final SpeechRecognitionAlternative alternative,
+            final boolean isFinal) {
+          runOnUiThread(() -> {
+            // TODO I don't think we should run this on the UI thread since the adapter handles the actual UI changes
+            speakerListAdapter.resetSpeakers();
+            alternative.getWordsList().forEach(entry -> speakerListAdapter
+                .addOrIncrementSpeaker(entry.getSpeakerTag(), 1, entry.getWord()));
+            // we can probably notify per entry here
+            speakerListAdapter.notifyDataSetChanged();
+          });
+        }
+      };
+  private RecyclerView.LayoutManager speakerListLayoutManager;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
 
-    // Record james' stupid voice
     if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
         != PackageManager.PERMISSION_GRANTED) {
       ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 20);
@@ -118,11 +101,14 @@ public class MainActivity extends AppCompatActivity {
       }
     });
 
-    speaker1 = findViewById(R.id.speaker1);
-    speaker2 = findViewById(R.id.speaker2);
-    speaker3 = findViewById(R.id.speaker3);
-    speaker4 = findViewById(R.id.speaker4);
+    speakerRecyclerView = findViewById(R.id.speakerList);
+    speakerRecyclerView.setHasFixedSize(false);
 
+    speakerListLayoutManager = new LinearLayoutManager(this);
+    speakerRecyclerView.setLayoutManager(speakerListLayoutManager);
+
+    speakerListAdapter = new SpeakerListAdapter();
+    speakerRecyclerView.setAdapter(speakerListAdapter);
   }
 
   @Override
@@ -134,12 +120,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Start listening to voices
     if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-        == PackageManager.PERMISSION_GRANTED) {
-      //   startVoiceRecorder();
-      // } else if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-      //     Manifest.permission.RECORD_AUDIO)) {
-      //   showPermissionMessageDialog();
-    } else {
+        != PackageManager.PERMISSION_GRANTED) {
       ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
           REQUEST_RECORD_AUDIO_PERMISSION);
     }
@@ -164,7 +145,6 @@ public class MainActivity extends AppCompatActivity {
   }
 
   public void startRecording(View view) {
-    // TODO: probably better
     AsyncTask.execute(() -> {
       if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO)
           != PackageManager.PERMISSION_GRANTED) {
@@ -186,26 +166,5 @@ public class MainActivity extends AppCompatActivity {
         voiceRecorder = null;
       }
     });
-  }
-
-  private void updatePercents() {
-    // we're just doing word count for now we can do elapsed time later
-    if (speakerMap.size() > 4) {
-      Toast toast = Toast.makeText(getApplicationContext(),
-          "More than 4 speakers detected",
-          Toast.LENGTH_SHORT);
-      toast.show();
-    } else if (speakerMap.isEmpty()) {
-      return;
-    }
-    // TODO make this more dynamic to support arbitrary speaker count
-    speaker1.setText(String.format("Speaker %d spoke %f percent", 1,
-        ((double) speakerMap.getOrDefault(1, 0) / totalWordCount) * 100));
-    speaker2.setText(String.format("Speaker %d spoke %f percent", 2,
-        ((double) speakerMap.getOrDefault(2, 0) / totalWordCount) * 100));
-    speaker3.setText(String.format("Speaker %d spoke %f percent", 3,
-        ((double) speakerMap.getOrDefault(3, 0) / totalWordCount) * 100));
-    speaker4.setText(String.format("Speaker %d spoke %f percent", 4,
-        ((double) speakerMap.getOrDefault(4, 0) / totalWordCount) * 100));
   }
 }
