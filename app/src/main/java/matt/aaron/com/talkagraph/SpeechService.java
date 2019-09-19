@@ -28,7 +28,6 @@ import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.rpc.ClientStream;
 import com.google.api.gax.rpc.ResponseObserver;
 import com.google.api.gax.rpc.StreamController;
-import com.google.auth.Credentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.speech.v1p1beta1.RecognitionConfig;
 import com.google.cloud.speech.v1p1beta1.SpeechClient;
@@ -43,7 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -57,7 +56,6 @@ public class SpeechService extends Service {
   StreamingRecognizeRequest request;
   private ClientStream<StreamingRecognizeRequest> clientStream;
   private SpeechClient speechClient;
-  private ConcurrentLinkedQueue<StreamingRecognizeRequest> requestsQueue;
   private AtomicBoolean stoppedRecording = new AtomicBoolean(false);
 
   public static SpeechService from(IBinder binder) {
@@ -70,14 +68,9 @@ public class SpeechService extends Service {
     InputStream stream = this.getResources().openRawResource(R.raw.credentials);
     try {
       GoogleCredentials credential = GoogleCredentials.fromStream(stream);
-      CredentialsProvider credentialsProvider = new CredentialsProvider() {
-        public Credentials getCredentials() {
-          return credential;
-        }
-      };
+      CredentialsProvider credentialsProvider = () -> credential;
       speechClient = SpeechClient
           .create(SpeechSettings.newBuilder().setCredentialsProvider(credentialsProvider).build());
-      requestsQueue = new ConcurrentLinkedQueue<>();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -86,6 +79,7 @@ public class SpeechService extends Service {
   @Override
   public void onDestroy() {
     super.onDestroy();
+    speechClient.shutdown();
   }
 
   private String getDefaultLanguageCode() {
@@ -142,20 +136,16 @@ public class SpeechService extends Service {
 
           @Override
           public void onResponse(StreamingRecognizeResponse response) {
-            SpeechRecognitionAlternative alternative = null;
             Log.d(TAG, response.toString());
-            boolean isFinal = false;
-            if (response.getResultsCount() > 0) {
-              // TODO: Should we iterate through all of them, not sure, seems like first is final?
-              final StreamingRecognitionResult result = response.getResults(0);
-              isFinal = result.getIsFinal();
-              if (result.getAlternativesCount() > 0) {
-                alternative = result.getAlternatives(0);
-              }
-            }
-            if (alternative != null) {
-              for (Listener listener : mListeners) {
-                listener.onSpeechRecognized(alternative, isFinal);
+            for (StreamingRecognitionResult result : response.getResultsList()) {
+              if (result.getIsFinal()) {
+                Optional<SpeechRecognitionAlternative> alternative = result.getAlternativesList()
+                    .stream().findFirst();
+                alternative.ifPresent(alt -> {
+                  for (Listener listener : mListeners) {
+                    listener.onSpeechRecognized(alt, true);
+                  }
+                });
               }
             }
           }
@@ -181,6 +171,7 @@ public class SpeechService extends Service {
    * @param size The number of elements that are actually relevant in the {@code data}.
    */
   public void recognize(byte[] data, int size) {
+    Log.d(TAG, ByteString.copyFrom(data).toString());
     clientStream.send(StreamingRecognizeRequest.newBuilder()
         .setAudioContent(ByteString.copyFrom(data, 0, size))
         .build());
@@ -191,7 +182,8 @@ public class SpeechService extends Service {
    */
   public void finishRecognizing() {
     stoppedRecording.set(true);
-    // clientStream.send(request);
+    // Can we send another request indicating speech is over?
+    clientStream.closeSend();
   }
 
   public interface Listener {
@@ -203,7 +195,6 @@ public class SpeechService extends Service {
      * @param isFinal {@code true} when the API finished processing audio.
      */
     void onSpeechRecognized(SpeechRecognitionAlternative text, boolean isFinal);
-
   }
 
   private class SpeechBinder extends Binder {

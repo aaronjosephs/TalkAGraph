@@ -5,12 +5,14 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.cloud.speech.v1p1beta1.SpeechRecognitionAlternative;
@@ -19,19 +21,13 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
-  private static final int REQUEST_RECORD_AUDIO_PERMISSION = 1;
-  private static final String TAG = "MainActivity";
-  final Map<Integer, Integer> speakerMap = new HashMap<>();
-  int totalWordCount = 0;
-  private SpeechService speechService;
-  private VoiceRecorder voiceRecorder;
   private final SpeechService.Listener speechServiceListener =
       new SpeechService.Listener() {
         @Override
         public void onSpeechRecognized(final SpeechRecognitionAlternative alternative,
             final boolean isFinal) {
           if (isFinal) {
-            voiceRecorder.dismiss();
+            // voiceRecorder.dismiss();
           }
 
           totalWordCount += alternative.getWordsCount();
@@ -45,14 +41,21 @@ public class MainActivity extends AppCompatActivity {
           });
           runOnUiThread(MainActivity.this::updatePercents);
         }
+
       };
+  private static final int REQUEST_RECORD_AUDIO_PERMISSION = 1;
+  private static final String TAG = "MainActivity";
+  final Map<Integer, Integer> speakerMap = new HashMap<>();
+  int totalWordCount = 0;
+  private SpeechService speechService;
+  private VoiceRecorder voiceRecorder;
+  private Switch recordingSwitch;
   private final ServiceConnection serviceConnection = new ServiceConnection() {
 
     @Override
     public void onServiceConnected(ComponentName componentName, IBinder binder) {
       speechService = SpeechService.from(binder);
       speechService.addListener(speechServiceListener);
-      // mStatus.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -61,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
   };
+
   private final VoiceRecorder.Callback voiceRecorderCallback = new VoiceRecorder.Callback() {
 
     @Override
@@ -105,6 +109,15 @@ public class MainActivity extends AppCompatActivity {
       ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 20);
     }
 
+    recordingSwitch = findViewById(R.id.recordingSwitch);
+    recordingSwitch.setOnClickListener(v -> {
+      if (recordingSwitch.isChecked()) {
+        startRecording(v);
+      } else {
+        stopRecording(v);
+      }
+    });
+
     speaker1 = findViewById(R.id.speaker1);
     speaker2 = findViewById(R.id.speaker2);
     speaker3 = findViewById(R.id.speaker3);
@@ -139,32 +152,40 @@ public class MainActivity extends AppCompatActivity {
       voiceRecorder.stop();
       voiceRecorder = null;
     }
-    // Stop Cloud Speech API
-    speechService.removeListener(speechServiceListener);
-    unbindService(serviceConnection);
-    speechService = null;
+
+    // Stop
+    if (speechService != null) {
+      speechService.removeListener(speechServiceListener);
+      unbindService(serviceConnection);
+      speechService = null;
+    }
 
     super.onStop();
   }
 
   public void startRecording(View view) {
-    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-        != PackageManager.PERMISSION_GRANTED) {
-      //  maybe show a toast here or something
-      return;
-    }
-    if (voiceRecorder != null) {
-      voiceRecorder.stop();
-    }
-    voiceRecorder = new VoiceRecorder(voiceRecorderCallback);
-    voiceRecorder.start();
+    // TODO: probably better
+    AsyncTask.execute(() -> {
+      if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO)
+          != PackageManager.PERMISSION_GRANTED) {
+        //  maybe show a toast here or something
+        return;
+      }
+      if (voiceRecorder != null) {
+        voiceRecorder.stop();
+      }
+      voiceRecorder = new VoiceRecorder(voiceRecorderCallback);
+      voiceRecorder.start();
+    });
   }
 
   public void stopRecording(View view) {
-    if (voiceRecorder != null) {
-      voiceRecorder.stop();
-      voiceRecorder = null;
-    }
+    AsyncTask.execute(() -> {
+      if (voiceRecorder != null) {
+        voiceRecorder.stop();
+        voiceRecorder = null;
+      }
+    });
   }
 
   private void updatePercents() {
